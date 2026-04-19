@@ -39,7 +39,8 @@ CREATE TABLE owners (
   last_name  VARCHAR_IGNORECASE(30),
   address    VARCHAR(255),
   city       VARCHAR(80),
-  telephone  VARCHAR(20)
+  telephone  VARCHAR(20),
+  email      VARCHAR(255)
 );
 CREATE INDEX owners_last_name ON owners (last_name);
 
@@ -61,4 +62,5 @@ CREATE TABLE visits (
   description VARCHAR(255)
 );
 ALTER TABLE visits ADD CONSTRAINT fk_visits_pets FOREIGN KEY (pet_id) REFERENCES pets (id);
+ALTER TABLE visits ADD CONSTRAINT unique_pet_visit_date UNIQUE (pet_id, visit_date);
 CREATE INDEX visits_pet_id ON visits (pet_id);
