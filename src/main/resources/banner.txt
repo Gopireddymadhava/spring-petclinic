@@ -11,5 +11,10 @@
  |___|   |_______| |___| |_______|_______|___|_|  |__|___|_______|  / / / /
  ==================================================================/_/_/_/
 
+Welcome to Pet Clinic
+
+Spring Petclinic is a Spring Boot application built using Maven or Gradle. 
+Java 17 or later is required for the build, and the application can run with Java 17 or newer.
+
 :: Built with Spring Boot :: ${spring-boot.version}
 
