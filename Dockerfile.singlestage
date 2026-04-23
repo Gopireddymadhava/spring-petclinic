@@ -1,0 +1,29 @@
+# 1. Base image
+FROM ubuntu:22.04
+
+# 2. Avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 3. Install system packages
+RUN apt update && apt install -y \
+    git \
+    openjdk-17-jdk \
+    maven \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 4. Set working directory
+WORKDIR /app
+
+# 5. Copy project files
+COPY . /app
+
+# 6. Build the project (creates target/*.jar)
+RUN mvn clean package -DskipTests
+
+# 7. Expose application port
+EXPOSE 8080
+
+# 8. Run the JAR file
+CMD ["sh", "-c", "java -jar target/*.jar"]
+
