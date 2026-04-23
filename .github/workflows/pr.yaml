@@ -1,0 +1,83 @@
+---
+name: dev-branch
+
+on:
+    push:
+        branches:
+          - dev
+
+jobs:
+    maven-build-job:
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: read
+            packages: write
+            security-events: write
+
+        steps:
+          - name: get the code
+            uses: actions/checkout@v6
+          - name: setup java
+            uses: actions/setup-java@v5
+            with:
+                java-version: '21'
+                distribution: 'temurin'
+          - name: cache maven dependencies
+            uses: actions/cache@v4
+            with:
+                path: ~/.m2/repository
+                key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+                restore-keys: ${{ runner.os }}-maven-
+          - name: Initialize CodeQL
+            uses: github/codeql-action/init@v4
+            with:
+                languages: java
+          - name: package the code
+            run: mvn clean package
+          - name: Perform code quality analysis
+            uses: github/codeql-action/analyze@v4
+          - name: upload JAR as artifact
+            uses: actions/upload-artifact@v4
+            with:
+                name: petclinic-jar
+                path: target/*.jar
+
+    docker-build-job:
+        runs-on: ubuntu-latest
+        steps:
+            - name: get the code
+              uses: actions/checkout@v6
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
+            - name: build docker image
+              uses: docker/build-push-action@v7
+              with:
+                push: false
+                tags: "shaik2025/springbootexample-mar26:latest"      
+# This workflow will execute on pull request to dev branch
+
+# name: pr-workflow
+
+# on:
+#     pull_request:
+#         branches:
+#           - dev
+
+# jobs:
+#     build:
+#         runs-on: ubuntu-latest
+#         steps:
+#             - name: get the code
+#               uses: actions/checkout@v6
+#             - name: compile the code
+#               run: mvn compile
+#             - name: test the code
+#               run: mvn test
+#             - name: create the package
+#               run: mvn clean package
+#             - name: publish the test results
+#               uses: EnricoMi/publish-unit-test-result-action@v2
+#               with:
+#                 files: "**/target/surefire-reports/**/*.xml"
+#                 comment_mode: always      
