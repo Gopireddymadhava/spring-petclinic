@@ -1,3 +1,64 @@
+DevOps Assignment: Spring PetClinic CI/CD Pipeline
+Submitted by: Bar
+
+## Overview
+This repository contains a fully automated CI/CD pipeline for the Spring PetClinic application. The solution automates the process from source code to a publicly available Docker image, ensuring a professional and scalable development workflow.
+
+```bash
+Pipeline Architecture:
+
+Compile: Resolves all dependencies from Maven Central and compiles the source code.
+Test: Runs the unit test suite to ensure application stability.
+Package: Builds a runnable JAR file
+Artifact to JFrog Uploads the JAR file to a JFrog Artifactory instance (bardpetclinic.jfrog.io) for binary management.
+Build Docker Image: Creates a production-ready image based on the Dockerfile.
+Push to Docker Hub: Tags and pushes the final image to a public registry.
+
+Deliverables & Access
+Jenkinsfile: (Compile -> Test -> Package -> Docker Build).
+Dockerfile: Multi-stage/JRE-optimized build for the Java application.
+Docker Hub Repository: lokokun290/spring-petclinic-bar
+JFrog Artifactory: Integrated as a binary repository for artifact versioning.
+Branch All work is done on the 'jenkins-pipeline' branch.
+
+Spring PetClinic CI Pipeline
+
+This project implements a full CI/CD pipeline using Jenkins and Docker.
+
+Architecture
+The pipeline consists of the following stages:
+
+Compile: Resolves dependencies from Maven Central and compiles source code.
+
+Test: Runs Unit tests.
+
+Package: Builds a runnable JAR file (skipping tests for speed).
+
+Build Image: Creates a Docker image containing the application.
+
+How to Run :
+
+option 1 - Run the pre-built image from Docker Hub :
+
+docker run -p 8080:8080 lokokun290/spring-petclinic-bar:latest
+
+option 2 - Build and Run locally :
+
+git clone https://github.com/lokokun1/spring-petclinic.git
+cd spring-petclinic
+
+docker build -t spring-petclinic-bar .
+docker run -p 8080:8080 spring-petclinic-bar
+
+Access the app: Open http://localhost:8080 in your browser
+
+---
+hub.docker.com
+https://hub.docker.com/repositories/lokokun290
+
+lokokun290/spring-petclinic-bar:latest
+lokokun290/jenkins:lts
+---
 # Spring PetClinic Sample Application [![Build Status](https://github.com/spring-projects/spring-petclinic/actions/workflows/maven-build.yml/badge.svg)](https://github.com/spring-projects/spring-petclinic/actions/workflows/maven-build.yml)[![Build Status](https://github.com/spring-projects/spring-petclinic/actions/workflows/gradle-build.yml/badge.svg)](https://github.com/spring-projects/spring-petclinic/actions/workflows/gradle-build.yml)
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/spring-projects/spring-petclinic) [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=7517918)
