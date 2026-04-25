@@ -2,14 +2,15 @@ pipeline {
     agent any
 
     environment {
+        APP_NAME   = "spring-petclinic"
         IMAGE_NAME = "springboot-app"
-        IMAGE_TAG  = "v1"
-        SONAR_HOST_URL = "http://host.docker.internal:9000"
+        IMAGE_TAG  = "${BUILD_NUMBER}"
+        SONAR_URL  = "http://sonarqube:9000"
     }
 
     stages {
 
-        stage('Checkout Source') {
+        stage('Checkout Code') {
             steps {
                 git branch: 'main',
                 credentialsId: 'github-creds',
@@ -19,52 +20,44 @@ pipeline {
 
         stage('Build Maven') {
             steps {
-                bat 'mvn clean package -DskipTests'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
         stage('SonarQube Scan') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    bat """
-                    mvn sonar:sonar ^
-                    -Dsonar.projectKey=spring-petclinic ^
-                    -Dsonar.projectName=spring-petclinic ^
-                    -Dsonar.host.url=%SONAR_HOST_URL% ^
-                    -Dsonar.login=%SONAR_TOKEN%
-                    """
+                    sh '''
+                    mvn sonar:sonar \
+                    -Dsonar.projectKey=spring-petclinic \
+                    -Dsonar.projectName=spring-petclinic \
+                    -Dsonar.host.url=$SONAR_URL \
+                    -Dsonar.login=$SONAR_TOKEN
+                    '''
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                bat 'docker build -t %IMAGE_NAME%:%IMAGE_TAG% .'
+                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
             }
         }
 
         stage('Run Container') {
             steps {
-                bat '''
-                docker stop spring-petclinic-container || exit 0
-                docker rm spring-petclinic-container || exit 0
-                docker run -d --name spring-petclinic-container -p 8080:8080 %IMAGE_NAME%:%IMAGE_TAG%
+                sh '''
+                docker stop spring-petclinic-container || true
+                docker rm spring-petclinic-container || true
+                docker run -d --name spring-petclinic-container -p 8080:8080 $IMAGE_NAME:$IMAGE_TAG
                 '''
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy Kubernetes') {
             steps {
-                bat '''
-                kubectl delete deployment spring-petclinic --ignore-not-found=true
-                kubectl delete service spring-petclinic-service --ignore-not-found=true
-
-                kubectl create deployment spring-petclinic --image=%IMAGE_NAME%:%IMAGE_TAG%
-
-                kubectl expose deployment spring-petclinic ^
-                --type=LoadBalancer ^
-                --port=80 ^
-                --target-port=8080
+                sh '''
+                kubectl apply -f deployment.yaml
                 '''
             }
         }
@@ -72,11 +65,11 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully'
+            echo 'Build Success'
         }
 
         failure {
-            echo 'Pipeline failed'
+            echo 'Build Failed'
         }
     }
 }
