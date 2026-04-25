@@ -19,36 +19,34 @@ pipeline {
         }
 
         stage('Build Maven') {
-    steps {
-        sh '''
-        docker run --rm \
-        -v "$PWD":/app \
-        -w /app \
-        maven:3.9.9-eclipse-temurin-17 \
-        mvn clean package -DskipTests
-        '''
-    }
-}
+            steps {
+                sh '''
+                docker run --rm \
+                -v "$PWD":/app \
+                -w /app \
+                maven:3.9.9-eclipse-temurin-17 \
+                mvn clean package -DskipTests
+                '''
+            }
+        }
 
         stage('SonarQube Scan') {
-    steps {
-        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-            sh '''
-            docker run --rm \
-            -v "$PWD":/app \
-            -w /app \
-            maven:3.9.9-eclipse-temurin-17 \
-            mvn sonar:sonar \
-            -Dsonar.projectKey=spring-petclinic \
-            -Dsonar.host.url=$SONAR_URL \
-            -Dsonar.login=$SONAR_TOKEN
-            '''
-        }
-    }
-}
+            steps {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                    docker run --rm \
+                    -v "$PWD":/app \
+                    -w /app \
+                    maven:3.9.9-eclipse-temurin-17 \
+                    mvn sonar:sonar \
+                    -Dsonar.projectKey=spring-petclinic \
+                    -Dsonar.host.url=$SONAR_URL \
+                    -Dsonar.login=$SONAR_TOKEN
+                    '''
+                }
+            }
         }
 
-        
         stage('Run Container') {
             steps {
                 sh '''
@@ -72,7 +70,6 @@ pipeline {
         success {
             echo 'Build Success'
         }
-
         failure {
             echo 'Build Failed'
         }
