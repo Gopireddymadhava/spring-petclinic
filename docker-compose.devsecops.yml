@@ -1,0 +1,124 @@
+networks:
+  devsecops-net:
+    driver: bridge
+
+volumes:
+  jenkins-data:
+  sonarqube-data:
+  sonarqube-logs:
+  sonarqube-extensions:
+  prometheus-data:
+  grafana-data:
+
+services:
+
+  # -------------------------------------------------------
+  # JENKINS - CI/CD Pipeline Engine
+  # URL: http://localhost:8080
+  # -------------------------------------------------------
+  jenkins:
+    build:
+      context: ./jenkins
+    image: petclinic/jenkins:devsecops
+    container_name: jenkins
+    environment:
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-admin}
+      CASC_JENKINS_CONFIG: /var/jenkins_conf/casc.yaml
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - devsecops-net
+    restart: unless-stopped
+
+  # -------------------------------------------------------
+  # SONARQUBE - Static Code Analysis
+  # URL: http://localhost:9000
+  # Default login: admin / admin
+  # -------------------------------------------------------
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-logs:/opt/sonarqube/logs
+      - sonarqube-extensions:/opt/sonarqube/extensions
+    networks:
+      - devsecops-net
+    restart: unless-stopped
+
+  # -------------------------------------------------------
+  # PROMETHEUS - Metrics Collection
+  # URL: http://localhost:9090
+  # -------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - ./prometheus/targets:/etc/prometheus/targets:ro
+    networks:
+      - devsecops-net
+    restart: unless-stopped
+
+  # -------------------------------------------------------
+  # GRAFANA - Monitoring Dashboards
+  # URL: http://localhost:3000
+  # Default login: admin / admin
+  # -------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - devsecops-net
+    restart: unless-stopped
+
+
+  petclinic-vm:
+    build:
+      context: ./petclinic-vm
+    image: petclinic/production-vm:latest
+    container_name: petclinic-vm
+    ports:
+      - "8081:8081"
+      - "2222:22"
+    networks:
+      - devsecops-net
+    restart: unless-stopped
+
+  # -------------------------------------------------------
+  # BURP SUITE - Security Analysis (Community Edition)
+  # -------------------------------------------------------
+  # Burp Community is GUI-first, so this container exposes it over VNC.
+  # Use a VNC client against localhost:5900 during the demo/manual scan.
+  burpsuite:
+    build: ./burpsuite
+    image: petclinic/burpsuite-community:devsecops
+    container_name: burpsuite
+    ports:
+      - "5900:5900"
+    volumes:
+      - ./burpsuite/data:/data
+    networks:
+      - devsecops-net
+    restart: unless-stopped

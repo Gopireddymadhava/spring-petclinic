@@ -1,0 +1,9 @@
+[
+  {
+    "targets": ["petclinic-vm:8081"],
+    "labels": {
+      "app": "petclinic",
+      "env": "dev"
+    }
+  }
+]
